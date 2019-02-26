@@ -65,7 +65,6 @@ class ObjectDetectorFromRGBD(object):
         while(self.sub_objects.num_objects is None): # wait until receives the result from .cpp node
             rospy.sleep(0.001)
             
-
         # Receive detection results, which are a list of clouds
         cnt_processed=0
         start = time.time()
@@ -86,12 +85,13 @@ class ObjectDetectorFromRGBD(object):
             print "my Warning: might miss a number of {:02d} objects".format(num_unreceived)
         
         # Return
-        return obj_clouds
+        return obj_clouds, cloud
 
-    def getObjetctsBboxFromClouds(self, obj_clouds, color):
+    def mapCloudsOntoImage(self, obj_clouds, color):
         img_disp = color.copy()
         bbox_finder = Clouds2Bbox(self.camera_intrinsic)
         obj_bboxes = list()
+
         # Input cloud; Get bounding box on image
         for i in range(len(obj_clouds)): 
             bbox = bbox_finder.computeCloudsBboxOnImage(obj_clouds[i], img_disp=img_disp)
@@ -101,8 +101,16 @@ class ObjectDetectorFromRGBD(object):
         if 1:
             self.pub_image_with_bbox.publish(img_disp) # publish for displaying
         return obj_bboxes, img_disp
-
+    
+    def getClouds3dCenters(self, obj_clouds):
+        obj_3d_centers = list()
+        for i in range(len(obj_clouds)): 
+            pc_points, _ = getCloudContents(obj_clouds[i])
+            obj_3d_centers.append(np.mean(pc_points, axis=0))
+        return obj_3d_centers
+    
     def filtCloud(self, cloud):
+
         # filt by downsample + range 
         cloud = voxel_down_sample(cloud, 0.005)
         cloud = filtCloudByRange(cloud, zmin=0.2, zmax=0.5)
@@ -164,6 +172,9 @@ class Bbox(object):
         self.y0 = int(math.floor(self.y0))
         self.x1 = int(math.floor(self.x1))
         self.y1 = int(math.floor(self.y1))
+
+    def converToStr(self):
+        return str([self.x0, self.y0, self.x1, self.y1])
 
 class BboxOfPoints(object):
     def __init__(self):

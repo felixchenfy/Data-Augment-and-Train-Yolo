@@ -20,6 +20,7 @@ import time
 import os, sys
 PYTHON_FILE_PATH = os.path.join(os.path.dirname(__file__))+"/"
 from collections import deque
+import datetime
 
 
 # my libriries
@@ -34,6 +35,74 @@ def draw_images(color, depth):
     q = cv2.waitKey(1)
     return chr(q)
 
+def get_time():
+    s=str(datetime.datetime.now())[5:].replace(' ','-').replace(":",'-').replace('.','-')[:-3]
+    return s # day, hour, seconds: 02-26-15-51-12-556
+
+def int2str(num, blank):
+    return ("{:0"+str(blank)+"d}").format(num)
+
+class SaveDetectionResult(object):
+    def __init__(self):
+        self.idx = 0
+        
+        # file name
+        self.simage = 'image'
+        self.sdepth = 'depth'
+        self.sresimg = 'resimg'
+        self.sobjects = 'objects'
+        self.sclouds = 'clouds'
+
+        # file folder
+        self.folder = PYTHON_FILE_PATH+"/../data/"+get_time()+"/" 
+        self.fsimage = self.folder + self.simage
+        self.fsdepth = self.folder + self.sdepth
+        self.fsresimg = self.folder + self.sresimg
+        self.fsobjects = self.folder + self.sobjects
+        self.fsclouds = self.folder + self.sclouds
+        os.mkdir(self.folder)
+        os.mkdir(self.fsimage)
+        os.mkdir(self.fsdepth)
+        os.mkdir(self.fsresimg)
+        os.mkdir(self.fsobjects)
+        os.mkdir(self.fsclouds)
+
+    def save(self, color, depth, img_disp, obj_bboxes, obj_3d_centers, cloud):
+        self.idx += 1
+        print "saveing {:05d}th data to file ... ".format(self.idx)
+
+        index = int2str(self.idx, 5) + "_"
+        
+        # Write images
+        cv2.imwrite(self.fsimage + "/" + index + self.simage + ".png", color)
+        cv2.imwrite(self.fsdepth + "/" + index + self.sdepth + ".png", depth)
+        cv2.imwrite(self.fsresimg + "/" + index + self.sresimg + ".png", img_disp)
+
+        # Write bounding box and other info
+        with open(self.fsobjects + "/" + index + self.sobjects + ".txt", 'w') as f:
+            for i in range(len(obj_bboxes)):
+
+                # object index
+                f.write(str(i))
+                
+                # image size
+                f.write(": " + str(color.shape[0:2]))
+
+                # bounding box
+                f.write(": " + obj_bboxes[i].converToStr())
+                
+                # object 3d centers
+                f.write(": " + str(obj_3d_centers[i]))
+
+                f.write("\n")
+
+        # Write cloud data
+        open3d.write_point_cloud(
+                self.fsclouds + "/" + index + self.sclouds + ".pcd", cloud)
+            
+        return
+
+# =============================================================================
 if __name__=="__main__":
     
     # Init node
@@ -53,10 +122,13 @@ if __name__=="__main__":
             "topic_num_objects",
             "topic_objects_on_image",)
 
+    # Save
+    result_saver = SaveDetectionResult()
+
     # Process
     cnt = 0
     while not rospy.is_shutdown():
-        rospy.sleep(0.01)
+        rospy.sleep(0.02)
         if(sub_color.isReceiveImage() and sub_depth.isReceiveImage):
             try:
                 color, t1 = sub_color.get_image()
@@ -68,14 +140,18 @@ if __name__=="__main__":
             print "\n======================================"
             print "Node 1: Publishes {:02d}th cloud to .cpp node for detecting objects".format(cnt)
 
-            # Input color and depth image; Receive point clouds and bounding box of each object
-            obj_clouds = detector.getObjectsCloudsFromRgbd(color, depth)
-            obj_bboxes, img_disp = detector.getObjetctsBboxFromClouds(obj_clouds, color)
+            # Input color and depth image; Receive point clouds of each object
+            obj_clouds, cloud = detector.getObjectsCloudsFromRgbd(color, depth)
 
-            if 0: # DEBUG: save to file
-                for i in range(len(obj_clouds)):
-                    filename="/home/feiyu/baxterws/src/winter_prj/auto_collect/data/pcobj"+str(i)+".pcd"
-                    open3d.write_point_cloud(filename, obj_clouds[i])
+            # Get bounding box
+            obj_bboxes, img_disp = detector.mapCloudsOntoImage(obj_clouds, color)
+
+            # Get x,y,z coordinate of each object cloud
+            obj_3d_centers = detector.getClouds3dCenters(obj_clouds)
+            # obj_3d_centers = transform_coordinate(obj_3d_centers)
+
+            # Write to file
+            result_saver.save(color, depth, img_disp, obj_bboxes, obj_3d_centers, cloud)
                 
     # plt.show()
     cv2.destroyAllWindows()

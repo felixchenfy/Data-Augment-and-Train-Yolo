@@ -29,9 +29,9 @@
   <exec_depend>std_msgs</exec_depend>
 
   <!-- pcl -->
-  <build_depend>pcl_ros</build_depend>
+  <!-- <build_depend>pcl_ros</build_depend>
   <build_export_depend>pcl_ros</build_export_depend>
-  <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>pcl_ros</exec_depend> -->
 
   <!-- message -->
   <build_depend>message_generation</build_depend>
