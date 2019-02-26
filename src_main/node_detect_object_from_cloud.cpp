@@ -34,7 +34,7 @@ typedef PointCloud<PointXYZRGB>::Ptr CloudPtr;
 
 void main_loop()
 {
-    ObjectDetector detector;
+    ObjectDetectorFromCloud detector;
     while (ros::ok())
     {
         if (detector.hasCloud())

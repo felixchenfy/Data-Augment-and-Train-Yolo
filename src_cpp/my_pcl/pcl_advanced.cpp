@@ -29,17 +29,17 @@ vector<PointCloud<PointXYZRGB>::Ptr> extractSubCloudsByIndices(
 // Remove planes
 int removePlanes(PointCloud<PointXYZRGB>::Ptr &cloud,
     PointCloud<PointXYZRGB>::Ptr &plane,
-    float plane_distance_threshold, int plane_max_iterations,
-    int stop_criteria_num_planes, float stop_criteria_rest_points_ratio,
+    float plane_distance_threshold_, int plane_max_iterations_,
+    int stop_criteria_num_planes_, float stop_criteria_rest_points_ratio,
     bool print_res)
 {
-    assert(stop_criteria_num_planes>=0 || stop_criteria_rest_points_ratio>=0);
+    assert(stop_criteria_num_planes_>=0 || stop_criteria_rest_points_ratio>=0);
     plane->clear();
     int total_points = (int)cloud->points.size();
     int cnt_planes=0;
     while(1){
-        if(stop_criteria_num_planes>=0){
-            if(cnt_planes>=stop_criteria_num_planes)break;
+        if(stop_criteria_num_planes_>=0){
+            if(cnt_planes>=stop_criteria_num_planes_)break;
         }else{
             if(cloud->points.size() <= stop_criteria_rest_points_ratio * total_points)break;
         }        
@@ -48,7 +48,7 @@ int removePlanes(PointCloud<PointXYZRGB>::Ptr &cloud,
         ModelCoefficients::Ptr coefficients;
         PointIndices::Ptr inliers;
         bool res = detectPlane(cloud, coefficients, inliers,
-            plane_distance_threshold, plane_max_iterations);
+            plane_distance_threshold_, plane_max_iterations_);
         if (res==false){
             cnt_planes--;
             cout<<"my WARNING: removePlanes' iteration fails to reach the desired times."<<endl;
@@ -83,7 +83,7 @@ int removePlanes(PointCloud<PointXYZRGB>::Ptr &cloud,
 
 // Do clustering using pcl::EuclideanClusterExtraction. Return the indices of each cluster.
 vector<PointIndices> divideIntoClusters(const PointCloud<PointXYZRGB>::Ptr cloud,
-        double cluster_tolerance, int min_cluster_size, int max_cluster_size)
+        double cluster_tolerance_, int min_cluster_size_, int max_cluster_size_)
 {
 
     // Creating the KdTree object for the search method of the extraction
@@ -92,9 +92,9 @@ vector<PointIndices> divideIntoClusters(const PointCloud<PointXYZRGB>::Ptr cloud
 
     // Set extractor
     EuclideanClusterExtraction<PointXYZRGB> ec;
-    ec.setClusterTolerance(cluster_tolerance); // similar to mean distance between points inside a point cloud
-    ec.setMinClusterSize(min_cluster_size);
-    ec.setMaxClusterSize(max_cluster_size);
+    ec.setClusterTolerance(cluster_tolerance_); // similar to mean distance between points inside a point cloud
+    ec.setMinClusterSize(min_cluster_size_);
+    ec.setMaxClusterSize(max_cluster_size_);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     vector<PointIndices> clusters_indices;

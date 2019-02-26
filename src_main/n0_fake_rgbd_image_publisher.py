@@ -36,7 +36,7 @@ if __name__=="__main__":
 
     # Get camera info
     topic_camera_info = rospy.get_param("topic_camera_info")
-    camera_intrinsic = read_pinhole_camera_intrinsic(rospy.get_param("file_camera_info"))
+    camera_intrinsic = read_pinhole_camera_intrinsic(rospy.get_param("filename_camera_info"))
 
     # # Set publisher
     color_pub = ImagePublisher(rospy.get_param("topic_color_image"), "color")

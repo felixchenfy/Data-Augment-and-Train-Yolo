@@ -10,7 +10,7 @@
         assert(0);                                                          \
     }
 
-ObjectDetector::ObjectDetector()
+ObjectDetectorFromCloud::ObjectDetectorFromCloud()
 {
     {
         ros::NodeHandle nh;
@@ -24,44 +24,44 @@ ObjectDetector::ObjectDetector()
         ros::NodeHandle nh("~");
 
         // -- Segment plane
-        NH_GET_PARAM("plane_distance_threshold", plane_distance_threshold)
-        NH_GET_PARAM("plane_max_iterations", plane_max_iterations)
-        NH_GET_PARAM("num_planes", num_planes)
-        ratio_of_rest_points = -1; // disabled
+        NH_GET_PARAM("plane_distance_threshold_", plane_distance_threshold_)
+        NH_GET_PARAM("plane_max_iterations_", plane_max_iterations_)
+        NH_GET_PARAM("num_planes_", num_planes_)
+        ratio_of_rest_points_ = -1; // disabled
 
         // -- Clustering
-        NH_GET_PARAM("flag_do_clustering", flag_do_clustering)
-        NH_GET_PARAM("cluster_tolerance", cluster_tolerance)
-        NH_GET_PARAM("min_cluster_size", min_cluster_size)
-        NH_GET_PARAM("max_cluster_size", max_cluster_size)
-        NH_GET_PARAM("max_num_objects", max_num_objects)
+        NH_GET_PARAM("flag_do_clustering_", flag_do_clustering_)
+        NH_GET_PARAM("cluster_tolerance_", cluster_tolerance_)
+        NH_GET_PARAM("min_cluster_size_", min_cluster_size_)
+        NH_GET_PARAM("max_cluster_size_", max_cluster_size_)
+        NH_GET_PARAM("max_num_objects_", max_num_objects_)
     }
     {
         ros::NodeHandle nh;
 
-        sub_pointcloud = nh.subscribe(topic_point_cloud, 5,
-                                      &ObjectDetector::callback_sub_pointcloud, this);
+        sub_pointcloud_ = nh.subscribe(topic_point_cloud, 5,
+                                      &ObjectDetectorFromCloud::callback_sub_pointcloud_, this);
 
-        pub_pc_clustering_result = nh.advertise<sensor_msgs::PointCloud2>(topic_point_cloud_clustering_res, 5);
-        pub_pc_objects = nh.advertise<sensor_msgs::PointCloud2>(topic_point_cloud_objects, 5);
-        pub_num_objects = nh.advertise<std_msgs::Int32>(topic_num_objects, 5);
+        pub_pc_clustering_result_ = nh.advertise<sensor_msgs::PointCloud2>(topic_point_cloud_clustering_res, 5);
+        pub_pc_objects_ = nh.advertise<sensor_msgs::PointCloud2>(topic_point_cloud_objects, 5);
+        pub_num_objects_ = nh.advertise<std_msgs::Int32>(topic_num_objects, 5);
     }
 }
 
-CloudPtr ObjectDetector::popCloud()
+CloudPtr ObjectDetectorFromCloud::popCloud()
 {
     CloudPtr cloud_src = buff_cloud_src.front();
     buff_cloud_src.pop();
     return cloud_src;
 }
 
-void ObjectDetector::publishResults(vector<CloudPtr> cloud_clusters)
+void ObjectDetectorFromCloud::publishResults(vector<CloudPtr> cloud_clusters)
 {
 
     // Number of objects
     std_msgs::Int32 _num_objects;
     _num_objects.data = (int)cloud_clusters.size();
-    pub_num_objects.publish(_num_objects);
+    pub_num_objects_.publish(_num_objects);
 
     // Object clustering result
     for (int i = 0; i < cloud_clusters.size(); i++)
@@ -70,11 +70,11 @@ void ObjectDetector::publishResults(vector<CloudPtr> cloud_clusters)
         // if (i > 0)
         //     ros::Duration(0.01).sleep(); // If lost message, I shall comment this out.
         printf("node 2 pubs %dth object of size %d\n", i, (int)cloud->points.size());
-        pubPclCloudToTopic(pub_pc_objects, cloud);
+        pubPclCloudToTopic(pub_pc_objects_, cloud);
     }
 }
 
-void ObjectDetector::callback_sub_pointcloud(const sensor_msgs::PointCloud2 &ros_cloud)
+void ObjectDetectorFromCloud::callback_sub_pointcloud_(const sensor_msgs::PointCloud2 &ros_cloud)
 {
     static int cnt = 0;
     CloudPtr tmp(new PointCloud<PointXYZRGB>);
@@ -83,7 +83,7 @@ void ObjectDetector::callback_sub_pointcloud(const sensor_msgs::PointCloud2 &ros
     printf("\nNode 2 has subscribed %dth cloud. Ready to detect object...\n", ++cnt);
 }
 
-void ObjectDetector::pubPclCloudToTopic(ros::Publisher &pub, CloudPtr pcl_cloud)
+void ObjectDetectorFromCloud::pubPclCloudToTopic(ros::Publisher &pub, CloudPtr pcl_cloud)
 {
     sensor_msgs::PointCloud2 ros_cloud_to_pub;
     pcl::toROSMsg(*pcl_cloud, ros_cloud_to_pub);
@@ -91,7 +91,7 @@ void ObjectDetector::pubPclCloudToTopic(ros::Publisher &pub, CloudPtr pcl_cloud)
     pub.publish(ros_cloud_to_pub);
 }
 
-vector<CloudPtr> ObjectDetector::detect_objects_from_cloud(CloudPtr cloud_src)
+vector<CloudPtr> ObjectDetectorFromCloud::detect_objects_from_cloud(CloudPtr cloud_src)
 {
     // Set output
     vector<CloudPtr> cloud_clusters;
@@ -106,16 +106,16 @@ vector<CloudPtr> ObjectDetector::detect_objects_from_cloud(CloudPtr cloud_src)
     CloudPtr plane(new PointCloud<PointXYZRGB>);
     int num_removed_planes = my_pcl::removePlanes(
         cloud_no_plane, plane,
-        plane_distance_threshold, plane_max_iterations,
-        num_planes, ratio_of_rest_points);
+        plane_distance_threshold_, plane_max_iterations_,
+        num_planes_, ratio_of_rest_points_);
 
     // -- Clustering: Divide the remaining point cloud into different clusters
     // -- Do clustering
     vector<PointIndices> clusters_indices;
     clusters_indices = my_pcl::divideIntoClusters(
-        cloud_no_plane, cluster_tolerance, min_cluster_size, max_cluster_size);
-    if (clusters_indices.size() > max_num_objects)
-        clusters_indices.resize(max_num_objects);
+        cloud_no_plane, cluster_tolerance_, min_cluster_size_, max_cluster_size_);
+    if (clusters_indices.size() > max_num_objects_)
+        clusters_indices.resize(max_num_objects_);
     int num_object = clusters_indices.size();
     if (num_object == 0)
     {
@@ -134,7 +134,7 @@ vector<CloudPtr> ObjectDetector::detect_objects_from_cloud(CloudPtr cloud_src)
             my_pcl::setPointColor(p, 255, 255, 255); // Set all points' color to white
 
         vector<vector<unsigned char>> colors({{255, 0, 0}, {0, 255, 0}, {0, 0, 255}});
-        assert(max_num_objects <= colors.size());
+        assert(max_num_objects_ <= colors.size());
         int i = 0;
 
         for (std::vector<PointIndices>::const_iterator it = clusters_indices.begin(); it != clusters_indices.end(); ++it)
@@ -166,7 +166,7 @@ vector<CloudPtr> ObjectDetector::detect_objects_from_cloud(CloudPtr cloud_src)
     }
 
     //
-    pubPclCloudToTopic(pub_pc_clustering_result, cloud_clustering_res);
+    pubPclCloudToTopic(pub_pc_clustering_result_, cloud_clustering_res);
 
     return cloud_clusters;
 }

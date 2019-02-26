@@ -24,13 +24,13 @@ vector<PointCloud<PointXYZRGB>::Ptr> extractSubCloudsByIndices(
 // Remove planes
 int removePlanes(PointCloud<PointXYZRGB>::Ptr &cloud,
     PointCloud<PointXYZRGB>::Ptr &plane,
-    float plane_distance_threshold = 0.01, int plane_max_iterations = 100,
-    int stop_criteria_num_planes = -1, float stop_criteria_rest_points_ratio = 0.3,
+    float plane_distance_threshold_ = 0.01, int plane_max_iterations_ = 100,
+    int stop_criteria_num_planes_ = -1, float stop_criteria_rest_points_ratio = 0.3,
     bool print_res=false);
 
 // Do clustering using pcl::EuclideanClusterExtraction. Return the indices of each cluster.
 vector<PointIndices> divideIntoClusters(const PointCloud<PointXYZRGB>::Ptr cloud,
-    double cluster_tolerance = 0.02, int min_cluster_size = 100,int max_cluster_size = 20000);
+    double cluster_tolerance_ = 0.02, int min_cluster_size_ = 100,int max_cluster_size_ = 20000);
 
 } // namespace my_pcl
 

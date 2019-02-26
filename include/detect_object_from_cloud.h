@@ -24,11 +24,11 @@ using namespace std;
 using namespace pcl;
 typedef PointCloud<PointXYZRGB>::Ptr CloudPtr;
 
-class ObjectDetector
+class ObjectDetectorFromCloud
 {
   public:
-    ObjectDetector();
-    void callback_sub_pointcloud(const sensor_msgs::PointCloud2 &ros_cloud);
+    ObjectDetectorFromCloud();
+    void callback_sub_pointcloud_(const sensor_msgs::PointCloud2 &ros_cloud);
     void pubPclCloudToTopic(ros::Publisher &pub, CloudPtr pcl_cloud);
     int numCloud() { return (int)buff_cloud_src.size(); }
     bool hasCloud() { return numCloud() > 0; }
@@ -43,20 +43,20 @@ class ObjectDetector
     queue<CloudPtr> buff_cloud_src; // When the node sub cloud from topic, save it to here
 
     // ===================== Subscriber and Publisher ======================
-    ros::Subscriber sub_pointcloud;
-    ros::Publisher pub_pc_clustering_result;
-    ros::Publisher pub_pc_objects;
-    ros::Publisher pub_num_objects;
+    ros::Subscriber sub_pointcloud_;
+    ros::Publisher pub_pc_clustering_result_;
+    ros::Publisher pub_pc_objects_;
+    ros::Publisher pub_num_objects_;
 
     // ============================= Parameters =============================
     // Filter: plane segmentation
-    float plane_distance_threshold;
-    int plane_max_iterations;
-    int num_planes;
-    float ratio_of_rest_points;
+    float plane_distance_threshold_;
+    int plane_max_iterations_;
+    int num_planes_;
+    float ratio_of_rest_points_;
 
     // Filter: divide cloud into clusters
-    bool flag_do_clustering;
-    double cluster_tolerance;
-    int min_cluster_size, max_cluster_size, max_num_objects;
+    bool flag_do_clustering_;
+    double cluster_tolerance_;
+    int min_cluster_size_, max_cluster_size_, max_num_objects_;
 };
