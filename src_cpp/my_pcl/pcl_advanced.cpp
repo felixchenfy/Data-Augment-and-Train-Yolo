@@ -3,7 +3,7 @@
 #include "my_pcl/pcl_filters.h"
 #include "my_pcl/pcl_commons.h"
 #include "my_pcl/pcl_io.h"
-
+#include "my_basics/basics.h"
 
 namespace my_pcl
 {
@@ -85,7 +85,6 @@ int removePlanes(PointCloud<PointXYZRGB>::Ptr &cloud,
 vector<PointIndices> divideIntoClusters(const PointCloud<PointXYZRGB>::Ptr cloud,
         double cluster_tolerance, int min_cluster_size, int max_cluster_size)
 {
-    vector<PointIndices> clusters_indices; // Output
 
     // Creating the KdTree object for the search method of the extraction
     search::KdTree<PointXYZRGB>::Ptr tree(new search::KdTree<PointXYZRGB>);
@@ -98,8 +97,20 @@ vector<PointIndices> divideIntoClusters(const PointCloud<PointXYZRGB>::Ptr cloud
     ec.setMaxClusterSize(max_cluster_size);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
+    vector<PointIndices> clusters_indices;
     ec.extract(clusters_indices);
-    return clusters_indices;
+
+    // sort based on size
+    int N=clusters_indices.size();
+    vector<PointIndices> clusters_indices_res;
+    vector<int> indices_sizes;
+    for(PointIndices &indices:clusters_indices)
+        indices_sizes.push_back(indices.indices.size());
+    vector<int> indices_size_order = my_basics::sort_indexes(indices_sizes);
+    for(int i=N-1;i>=0;i--){
+        clusters_indices_res.push_back(clusters_indices[indices_size_order[i]]);
+    }
+    return clusters_indices_res;
 }
 
 

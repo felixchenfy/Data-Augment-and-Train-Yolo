@@ -16,7 +16,7 @@
 
 
     <!-- Main nodes -->
-    <!-- <node name="n0_fake_rgbd_image_publisher" pkg="auto_collect" type="n0_fake_rgbd_image_publisher.py"  output="screen"/> -->
+    <node name="n0_fake_rgbd_image_publisher" pkg="auto_collect" type="n0_fake_rgbd_image_publisher.py"  output="screen"/>
     
     
     <node name="n1_main_add_label_to_image" pkg="auto_collect" type="n1_main_add_label_to_image.py"  output="screen">
@@ -24,7 +24,7 @@
     </node>
 
 
-    <node name="n2_detect_object_from_pc" pkg="auto_collect"  type="n2_detect_object_from_pc" output = "screen">  
+    <node name="node_detect_object_from_cloud" pkg="auto_collect"  type="node_detect_object_from_cloud" output = "screen">  
         <!-- segment plane -->
         <param name="num_planes" type="int" value="1" />     
         <param name="plane_distance_threshold" type="double" value="0.01" />     

@@ -43,10 +43,6 @@ set( THIRD_PARTY_LIBS
     ${PCL_LIBRARIES}
 )
 
-############### Sub directories ######################
-include_directories( ${PROJECT_SOURCE_DIR}/include )
-add_subdirectory( src_cpp )
-# add_subdirectory( test )
 
 ############### ROS ######################
 find_package(catkin REQUIRED COMPONENTS
@@ -85,4 +81,12 @@ include_directories(
 )
 
 ############### Sub directories ######################
+include_directories( ${PROJECT_SOURCE_DIR}/include )
+add_subdirectory( src_cpp )
 add_subdirectory( src_main )
+
+############### Test ######################
+add_executable(test test.cpp )
+target_link_libraries( test
+    ${catkin_LIBRARIES} 
+)

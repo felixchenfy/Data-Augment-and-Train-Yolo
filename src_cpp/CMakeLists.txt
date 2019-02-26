@@ -23,5 +23,18 @@ target_link_libraries( my_pcl
     my_basics
 )
 
+# ----------------------- scripts -----------------------
+
+add_library(detect_object_from_cloud SHARED
+    detect_object_from_cloud.cpp
+)
+target_link_libraries( detect_object_from_cloud
+    ${THIRD_PARTY_LIBS} 
+    my_basics my_pcl
+    ${catkin_LIBRARIES} 
+)
+
+
+
 
 

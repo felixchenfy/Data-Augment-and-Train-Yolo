@@ -33,6 +33,9 @@ void preTranslatePoint(const vector<vector<float>> &T, float &x, float &y, float
 
 void inv(const float T_src[4][4], float T_dst[4][4]);
 
+vector<int> sort_indexes(const vector<int> &v);
+
+
 } // namespace my_basics
 
 #endif

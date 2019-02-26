@@ -60,25 +60,33 @@ class ObjectsCloudsSubscriber(object):
         self.num_objects=None;
         self.num_objects_to_receive=None;
         self.clouds_buff=deque()
-        self.flag_receive_all=False
+        self.flag_receive_all=None
         self.sub_num_objects = rospy.Subscriber(topic_num_objects, Int32, self._call_back_sub_num_objects)
         self.sub_objects = rospy.Subscriber(topic_point_cloud_objects, PointCloud2, self._call_back_sub_objects)
-
+        # self.sub_objects = rospy.Subscriber(topic_point_cloud_objects, PointCloud2, self._call_back_sub_objects,rospy.TransportHints().tcpNoDelay())
+    
+    def reset(self):
+        self.num_objects=None;
+        self.num_objects_to_receive=None;
+        # print "before clear: clouds_buff.size()=" , len(self.clouds_buff)
+        self.clouds_buff=deque()
+        self.flag_receive_all=None
     
     def _call_back_sub_num_objects(self, num_objects):
         self.num_objects=num_objects.data
         self.num_objects_to_receive=num_objects.data
-        self.clouds_buff.clear()
         self.flag_receive_all=False
         print "\nNode 1 starts subscribing {:d} objects' point cloud: ".format(self.num_objects)
 
     def _call_back_sub_objects(self, ros_cloud):
         self.clouds_buff.append(ros_cloud)
+
+    def pop_cloud(self):
+        cloud_ros_format = sub_objects.clouds_buff.popleft()
         self.num_objects_to_receive-=1
-        # print "{:d} objects remained to receive".format(self.num_objects_to_receive)
-        # print "{:d} objects remained to process".format(len(self.clouds_buff))
         if self.num_objects_to_receive==0:
             self.flag_receive_all=True
+        return cloud_ros_format
 
 class ExternalBboxFinder(object):
     def __init__(self):
@@ -155,6 +163,7 @@ if __name__=="__main__":
     prc=PointCloudsProcessor(camera_intrinsic)
     cnt = 0
     while not rospy.is_shutdown():
+        rospy.sleep(0.01)
         if(sub_color.isReceiveImage() and sub_depth.isReceiveImage):
             try:
                 color, t1 = sub_color.get_image()
@@ -168,6 +177,7 @@ if __name__=="__main__":
             # Send data to Node 2 for processing
             cloud = rgbd2cloud(color, depth, camera_intrinsic, img_format="cv2")
             cloud = filtCloud(cloud)
+            sub_objects.reset()
             pub_cloud.publish(cloud, cloud_format="open3d")
             print "\n======================================"
             print "Node 1: Publish a cloud " + str(cnt)
@@ -175,11 +185,13 @@ if __name__=="__main__":
             # Receive each object's point cloud and project them onto image
             cnt_processed=0
             start = time.time()
-            while(((not sub_objects.flag_receive_all) or cnt_processed<sub_objects.num_objects) and (not rospy.is_shutdown())): # wait until processed all clouds
+            while(sub_objects.num_objects is None):
+                rospy.sleep(0.001)
+            while(((not sub_objects.flag_receive_all)) and (not rospy.is_shutdown())): # wait until processed all clouds
                 if len(sub_objects.clouds_buff)>0: # A new cloud has been received
                     cnt_processed+=1
+                    cloud_ros_format = sub_objects.pop_cloud()
                     print "Node 1: processing object " + str(cnt_processed)
-                    cloud_ros_format = sub_objects.clouds_buff.popleft()
                     cloud = convertCloudFromRosToOpen3d(cloud_ros_format)
                     if 0: # DEBUG: save to file
                         filename="/home/feiyu/baxterws/src/winter_prj/auto_collect/data/pcobj"+str(cnt_processed)+".pcd"
@@ -194,12 +206,10 @@ if __name__=="__main__":
                     break
             if cnt_processed==sub_objects.num_objects:
                 print "Node 1: ALL OBJECTS BEEN PROCESSED. COOL !!!"
-                pub_objects_on_image.publish(img_disp)
             else:
                 print "Node 1: miss some clouds?"
+            pub_objects_on_image.publish(img_disp)
 
-        # End one frame
-        rospy.sleep(0.01)
 
     plt.show()
     cv2.destroyAllWindows()

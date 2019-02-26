@@ -1,7 +1,7 @@
 
 
 #include "my_basics/basics.h"
-
+#include <numeric>
 
 namespace my_basics{
 
@@ -65,6 +65,35 @@ void inv(const float T_src[4][4], float T_dst[4][4]){
         }
     }
 }
+
+// Get index of sorting result
+// https://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
+vector<int> sort_indexes(const vector<int> &v) {
+
+  // initialize original index locations
+  vector<int> idx(v.size());
+  iota(idx.begin(), idx.end(), 0); // #include <numeric>
+
+  // sort indexes based on comparing values in v
+  sort(idx.begin(), idx.end(),
+       [&v](int i1, int i2) {return v[i1] < v[i2];});
+
+  return idx;
+}
+
+// template <typename T>
+// vector<size_t> sort_indexes(const vector<T> &v) {
+
+//   // initialize original index locations
+//   vector<size_t> idx(v.size());
+//   iota(idx.begin(), idx.end(), 0);
+
+//   // sort indexes based on comparing values in v
+//   sort(idx.begin(), idx.end(),
+//        [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
+
+//   return idx;
+// }
 
 
 }
