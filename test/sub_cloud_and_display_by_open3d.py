@@ -14,7 +14,7 @@ from sensor_msgs.msg import PointCloud2
 
 # Include my lib
 rospy.loginfo("----------------------------:"+PYTHON_FILE_PATH)
-sys.path.append(PYTHON_FILE_PATH + "../src_python")
+sys.path.append(PYTHON_FILE_PATH + "../lib_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
 
 # Global Vars

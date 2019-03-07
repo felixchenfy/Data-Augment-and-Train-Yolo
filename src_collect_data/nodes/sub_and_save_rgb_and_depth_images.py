@@ -17,7 +17,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import String
 
 # my libriries
-sys.path.append(PYTHON_FILE_PATH + "../src_python")
+sys.path.append(PYTHON_FILE_PATH + "../lib_python")
 from lib_cloud import *
 from lib_ros_topic import ColorImageSubscriber, DepthImageSubscriber
 PYTHON_FILE_PATH = os.path.join(os.path.dirname(__file__))+"/"

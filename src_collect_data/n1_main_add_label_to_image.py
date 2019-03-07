@@ -24,7 +24,7 @@ import datetime
 
 
 # my libriries
-sys.path.append(PYTHON_FILE_PATH + "../src_python")
+sys.path.append(PYTHON_FILE_PATH + "../lib_python")
 from lib_ros_topic import ColorImageSubscriber, DepthImageSubscriber
 from detect_object_from_rgbd import ObjectDetectorFromRGBD
 PYTHON_FILE_PATH = os.path.join(os.path.dirname(__file__))+"/"
@@ -49,6 +49,7 @@ class SaveDetectionResult(object):
         # file name
         self.simage = 'image'
         self.sdepth = 'depth'
+        self.smask = 'mask'
         self.sresimg = 'resimg'
         self.sobjects = 'objects'
         self.sclouds = 'clouds'
@@ -57,17 +58,19 @@ class SaveDetectionResult(object):
         self.folder = PYTHON_FILE_PATH+"/../data/"+get_time()+"/" 
         self.fsimage = self.folder + self.simage
         self.fsdepth = self.folder + self.sdepth
+        self.fsmask = self.folder + self.smask
         self.fsresimg = self.folder + self.sresimg
         self.fsobjects = self.folder + self.sobjects
         self.fsclouds = self.folder + self.sclouds
         os.mkdir(self.folder)
         os.mkdir(self.fsimage)
         os.mkdir(self.fsdepth)
+        os.mkdir(self.fsmask)
         os.mkdir(self.fsresimg)
         os.mkdir(self.fsobjects)
         os.mkdir(self.fsclouds)
 
-    def save(self, color, depth, img_disp, obj_bboxes, obj_3d_centers, cloud):
+    def save(self, color, depth, mask, img_disp, obj_bboxes, obj_3d_centers, cloud):
         self.idx += 1
         print "saveing {:05d}th data to file ... ".format(self.idx)
 
@@ -76,6 +79,7 @@ class SaveDetectionResult(object):
         # Write images
         cv2.imwrite(self.fsimage + "/" + index + self.simage + ".png", color)
         cv2.imwrite(self.fsdepth + "/" + index + self.sdepth + ".png", depth)
+        cv2.imwrite(self.fsmask + "/" + index + self.smask + ".png", mask)
         cv2.imwrite(self.fsresimg + "/" + index + self.sresimg + ".png", img_disp)
 
         # Write bounding box and other info
@@ -141,17 +145,16 @@ if __name__=="__main__":
             print "Node 1: Publishes {:02d}th cloud to .cpp node for detecting objects".format(cnt)
 
             # Input color and depth image; Receive point clouds of each object
-            obj_clouds, cloud = detector.getObjectsCloudsFromRgbd(color, depth)
+            obj_clouds, cloud_src = detector.get_objects_clouds_from_RGBD(color, depth)
 
-            # Get bounding box
-            obj_bboxes, img_disp = detector.mapCloudsOntoImage(obj_clouds, color)
+            # Get bounding box and mask
+            obj_bboxes, mask, img_disp = detector.get_bbox_and_mask_from_clouds(obj_clouds, color)
 
             # Get x,y,z coordinate of each object cloud
             obj_3d_centers = detector.getClouds3dCenters(obj_clouds)
-            # obj_3d_centers = transform_coordinate(obj_3d_centers)
 
             # Write to file
-            result_saver.save(color, depth, img_disp, obj_bboxes, obj_3d_centers, cloud)
+            result_saver.save(color, depth, mask, img_disp, obj_bboxes, obj_3d_centers, cloud_src)
                 
     # plt.show()
     cv2.destroyAllWindows()

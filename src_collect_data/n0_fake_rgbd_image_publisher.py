@@ -17,7 +17,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import String
 
 # my libriries
-sys.path.append(PYTHON_FILE_PATH + "../src_python")
+sys.path.append(PYTHON_FILE_PATH + "../lib_python")
 from lib_cloud import read_color_depth_images
 from lib_ros_topic import CameraInfoPublisher, ImagePublisher
 
@@ -30,7 +30,7 @@ if __name__=="__main__":
     bridge = CvBridge()
 
     # Get color and depth image
-    images_folder = "/home/feiyu/baxterws/src/winter_prj/auto_collect/data/mydata"
+    images_folder = "/home/feiyu/baxterws/src/winter_prj/auto_collect/data/pcd_of_an_object_from_different_views"
     image_index=1
     color_img, depth_img = read_color_depth_images(images_folder, image_index, img_format="cv")
 

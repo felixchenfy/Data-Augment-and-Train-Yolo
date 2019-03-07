@@ -97,7 +97,7 @@ def getChessboardPose(img,
     # -- Find the chess board corners in gray image
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if 0: # DEBUG: save image to file and print out info
-        filename_to_save_img = "/home/feiyu/baxterws/src/scan3d_by_baxter/src_main/calib_camera_pose//../../data/data_debug/img_for_calib.png"
+        filename_to_save_img = "/home/feiyu/baxterws/src/scan3d_by_baxter/src_collect_data/calib_camera_pose//../../data/data_debug/img_for_calib.png"
         cv2.imwrite(filename_to_save_img, gray)
         print "Save gray image to file. Other info: ", CHECKER_ROWS, CHECKER_COLS
     flag_find_chessboard, corners = cv2.findChessboardCorners(
@@ -185,7 +185,7 @@ def drawBoxToImage(img_display, p0, p1, color=None, line_width=2):
         color=colors_dict[color]
 
     for i in range(4):
-        drawLineToImage(img_display, (xs[i],ys[i]),  (xs[i+1],ys[i+1]), color, line_width=2)
+        drawLineToImage(img_display, (xs[i],ys[i]),  (xs[i+1],ys[i+1]), color, line_width)
 
 def drawCoordinateToImage(img_display, R_cam_to_coord, p_cam_to_coord, camera_intrinsics, distortion_coeffs):
     T_cam_to_coord=form_T(R_cam_to_coord, p_cam_to_coord)

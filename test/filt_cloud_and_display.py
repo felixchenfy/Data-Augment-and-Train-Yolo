@@ -9,7 +9,7 @@ import copy
 PYTHON_FILE_PATH=os.path.join(os.path.dirname(__file__))+"/"
 
 # Include my lib
-sys.path.append(PYTHON_FILE_PATH + "../src_python")
+sys.path.append(PYTHON_FILE_PATH + "../lib_python")
 # from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
 from lib_cloud_registration import *
 

@@ -7,7 +7,7 @@ PROJECT_PATH = '/home/feiyu/baxterws/src/winter_prj/auto_collect/'
 # include my lib
 import sys, os
 PYTHON_FILE_PATH=os.path.join(os.path.dirname(__file__))+"/"
-sys.path.append(PYTHON_FILE_PATH + "../src_python")
+sys.path.append(PYTHON_FILE_PATH + "../lib_python")
 from lib_cloud_registration import *
 
 

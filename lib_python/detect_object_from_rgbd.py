@@ -23,7 +23,7 @@ from collections import deque
 
 
 # my libriries
-sys.path.append(PYTHON_FILE_PATH + "../src_python")
+sys.path.append(PYTHON_FILE_PATH + "../lib_python")
 from lib_cloud import *
 from lib_ros_topic import ColorImageSubscriber, DepthImageSubscriber, CloudPublisher, ImagePublisher
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromRosToOpen3d
@@ -52,17 +52,18 @@ class ObjectDetectorFromRGBD(object):
         # Params
         self.max_wait_time = 0.5
 
-    def getObjectsCloudsFromRgbd(self, color, depth):
+    def get_objects_clouds_from_RGBD(self, color, depth):
         obj_clouds = list()
 
         # Generate cloud data from color and depth images
-        cloud = rgbd2cloud(color, depth, self.camera_intrinsic, img_format="cv2")
-        cloud = self.filtCloud(cloud)
+        cloud_src = rgbd2cloud(color, depth, self.camera_intrinsic, img_format="cv2")
+        cloud_src = self.filtCloud(cloud_src)
 
         # Send cloud to .cpp node for detect object
         self.sub_objects.reset()
-        self.pub_cloud.publish(cloud, cloud_format="open3d")
-        while(self.sub_objects.num_objects is None): # wait until receives the result from .cpp node
+        self.pub_cloud.publish(cloud_src, cloud_format="open3d")
+        while(self.sub_objects.num_objects is None  and (not rospy.is_shutdown()) ): 
+            # wait until receives the result from .cpp node
             rospy.sleep(0.001)
             
         # Receive detection results, which are a list of clouds
@@ -85,22 +86,35 @@ class ObjectDetectorFromRGBD(object):
             print "my Warning: might miss a number of {:02d} objects".format(num_unreceived)
         
         # Return
-        return obj_clouds, cloud
+        return obj_clouds, cloud_src
 
-    def mapCloudsOntoImage(self, obj_clouds, color):
+    def get_bbox_and_mask_from_clouds(self, obj_clouds, color):
         img_disp = color.copy()
+        mask = np.zeros(color.shape[0:2], np.uint8)
         bbox_finder = Clouds2Bbox(self.camera_intrinsic)
         obj_bboxes = list()
 
         # Input cloud; Get bounding box on image
         for i in range(len(obj_clouds)): 
-            bbox = bbox_finder.computeCloudsBboxOnImage(obj_clouds[i], img_disp=img_disp)
+            bbox = bbox_finder.draw_clouds_onto_image_and_get_bbox(
+                obj_clouds[i], color = i+1, img=mask)
             obj_bboxes.append(bbox)
-            drawBoxToImage(img_disp, [bbox.x0, bbox.y0], [bbox.x1, bbox.y1], color='r',line_width=4)
+            drawBoxToImage(img_disp, [bbox.x0, bbox.y0], [bbox.x1, bbox.y1], color='r',line_width=5)
 
+        # Dilate mask
+        kernel = np.ones((5,5),np.uint8)
+        mask = cv2.dilate(mask, kernel, iterations = 3)
+        mask = cv2.erode(mask, kernel, iterations = 1)
+
+        # img_disp
+        for i in range(3):
+            channel = img_disp[..., i]
+            channel[np.where(mask==i+1)] = 255
+
+        # Publish to topic for display
         if 1:
             self.pub_image_with_bbox.publish(img_disp) # publish for displaying
-        return obj_bboxes, img_disp
+        return obj_bboxes, mask, img_disp
     
     def getClouds3dCenters(self, obj_clouds):
         obj_3d_centers = list()
@@ -109,11 +123,11 @@ class ObjectDetectorFromRGBD(object):
             obj_3d_centers.append(np.mean(pc_points, axis=0))
         return obj_3d_centers
     
-    def filtCloud(self, cloud):
+    def filtCloud(self, cloud, voxel_size = 0.005, zmin = 0.2, zmax = 0.5):
 
         # filt by downsample + range 
-        cloud = voxel_down_sample(cloud, 0.005)
-        cloud = filtCloudByRange(cloud, zmin=0.2, zmax=0.5)
+        cloud = voxel_down_sample(cloud, voxel_size)
+        cloud = filtCloudByRange(cloud, zmin=zmin, zmax=zmax)
 
         # Statistical outlier removal
         cl,ind = statistical_outlier_removal(cloud,
@@ -204,24 +218,26 @@ class Clouds2Bbox(object):
         self.width = camera_intrinsic.width
         self.height = camera_intrinsic.height
         rgb=['r','g','b']
-        colormap={'b':[255,0,0],'g':[0,255,0],'r':[0,0,255]}
-        self.getColor=lambda idx:colormap[rgb[idx]]
+        # colormap={'b':[255,0,0],'g':[0,255,0],'r':[0,0,255]}
+        # self.getColor=lambda idx:colormap[rgb[idx]]
 
-    def computeCloudsBboxOnImage(self, cloud, color_idx=2, img_disp=None):
-        color = np.array(self.getColor(color_idx))
+    def draw_clouds_onto_image_and_get_bbox(self, cloud, color=None, img=None):
+        if color is None:
+            colormap={'b':[255,0,0],'g':[0,255,0],'r':[0,0,255]}
+            color=colormap['r']
         pc_points, _ = getCloudContents(cloud)
         N = pc_points.shape[0]
         bbox_finder = BboxOfPoints()
         for i in range(N):
             uv = cam2pixel(pc_points[i:i+1,:].transpose(), self.K)
             bbox_finder.addNewPoint(uv)
-            if img_disp is not None: # Add color to the image
+            if img is not None: # Add color to the image
                 x, y = int(uv[0]), int(uv[1])
                 r=5
                 try:
-                    img_disp[y-r:y+r,x-r:x+r]=color
+                    img[y-r:y+r,x-r:x+r]=color
                 except:
-                    None
+                    pass
         bbox = bbox_finder.returnBbox()        
         bbox.convertToInt()
         return bbox

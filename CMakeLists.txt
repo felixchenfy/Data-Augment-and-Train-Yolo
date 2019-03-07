@@ -81,9 +81,9 @@ include_directories(
 )
 
 ############### Sub directories ######################
-include_directories( ${PROJECT_SOURCE_DIR}/include )
-add_subdirectory( src_cpp )
-add_subdirectory( src_main )
+include_directories( ${PROJECT_SOURCE_DIR}/lib_cpp_h )
+add_subdirectory( lib_cpp )
+add_subdirectory( src_collect_data )
 
 ############### Test ######################
 add_executable(test test.cpp )
