@@ -124,7 +124,8 @@ if __name__=="__main__":
             "topic_point_cloud",
             "topic_point_cloud_objects",
             "topic_num_objects",
-            "topic_objects_on_image",)
+            "topic_objects_on_image",
+            max_wait_time = 0.3)
 
     # Save
     result_saver = SaveDetectionResult()
@@ -132,7 +133,7 @@ if __name__=="__main__":
     # Process
     cnt = 0
     while not rospy.is_shutdown():
-        rospy.sleep(0.02)
+        rospy.sleep(0.01)
         if(sub_color.isReceiveImage() and sub_depth.isReceiveImage):
             try:
                 color, t1 = sub_color.get_image()
@@ -145,7 +146,10 @@ if __name__=="__main__":
             print "Node 1: Publishes {:02d}th cloud to .cpp node for detecting objects".format(cnt)
 
             # Input color and depth image; Receive point clouds of each object
-            obj_clouds, cloud_src = detector.get_objects_clouds_from_RGBD(color, depth)
+            th = 0.5
+            obj_clouds, cloud_src = detector.get_objects_clouds_from_RGBD(color, depth,
+                xmin=-th, xmax=th, ymin=-th, ymax=th,
+                zmin = 0.2, zmax = 0.8, voxel_size = 0.005)
 
             # Get bounding box and mask
             obj_bboxes, mask, img_disp = detector.get_bbox_and_mask_from_clouds(obj_clouds, color)
@@ -154,8 +158,16 @@ if __name__=="__main__":
             obj_3d_centers = detector.getClouds3dCenters(obj_clouds)
 
             # Write to file
-            result_saver.save(color, depth, mask, img_disp, obj_bboxes, obj_3d_centers, cloud_src)
-                
+            if 1:
+                cv2.imshow("detected_object", img_disp)
+                q = cv2.waitKey(10)
+                print(chr(q))
+                if q!=-1 and chr(q)=='s':
+                    print("!!!!!!!!!!!!!!!!!!!")
+                    print("!!! SAVE RESULT !!!")
+                    print("!!!!!!!!!!!!!!!!!!!")
+                    result_saver.save(color, depth, mask, img_disp, obj_bboxes, obj_3d_centers, cloud_src)
+            
     # plt.show()
     cv2.destroyAllWindows()
     print "Node stops"

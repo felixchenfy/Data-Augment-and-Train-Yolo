@@ -39,6 +39,7 @@ class ObjectDetectorFromRGBD(object):
             topic_point_cloud_objects,
             topic_num_objects,
             topic_objects_on_image,
+            max_wait_time = 0.3
         ):
         
         # Camera info
@@ -50,14 +51,15 @@ class ObjectDetectorFromRGBD(object):
         self.pub_image_with_bbox = ImagePublisher(rospy.get_param(topic_objects_on_image), img_format="color")
 
         # Params
-        self.max_wait_time = 0.5
+        self.max_wait_time = max_wait_time
 
-    def get_objects_clouds_from_RGBD(self, color, depth):
+    def get_objects_clouds_from_RGBD(self, color, depth,
+        xmin=-999, xmax=999, ymin=-999, ymax=999, zmin = 0.2, zmax = 0.5, voxel_size = 0.005):
         obj_clouds = list()
 
         # Generate cloud data from color and depth images
         cloud_src = rgbd2cloud(color, depth, self.camera_intrinsic, img_format="cv2")
-        cloud_src = self.filtCloud(cloud_src)
+        cloud_src = self.filtCloud(cloud_src, xmin, xmax, ymin, ymax, zmin, zmax, voxel_size)
 
         # Send cloud to .cpp node for detect object
         self.sub_objects.reset()
@@ -103,8 +105,10 @@ class ObjectDetectorFromRGBD(object):
 
         # Dilate mask
         kernel = np.ones((5,5),np.uint8)
-        mask = cv2.dilate(mask, kernel, iterations = 3)
-        mask = cv2.erode(mask, kernel, iterations = 1)
+        mask = cv2.dilate(mask, kernel, iterations = 2)
+        mask = cv2.erode(mask, kernel, iterations = 3)
+        # kernel = np.ones((3,3),np.uint8)
+        # mask = cv2.erode(mask, kernel, iterations = 2)
 
         # img_disp
         for i in range(3):
@@ -123,11 +127,11 @@ class ObjectDetectorFromRGBD(object):
             obj_3d_centers.append(np.mean(pc_points, axis=0))
         return obj_3d_centers
     
-    def filtCloud(self, cloud, voxel_size = 0.005, zmin = 0.2, zmax = 0.5):
+    def filtCloud(self, cloud, xmin,xmax,ymin,ymax,zmin,zmax, voxel_size = 0.005):
 
         # filt by downsample + range 
         cloud = voxel_down_sample(cloud, voxel_size)
-        cloud = filtCloudByRange(cloud, zmin=zmin, zmax=zmax)
+        cloud = filtCloudByRange(cloud, xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,zmin=zmin, zmax=zmax)
 
         # Statistical outlier removal
         cl,ind = statistical_outlier_removal(cloud,

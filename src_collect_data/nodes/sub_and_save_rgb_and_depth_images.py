@@ -6,7 +6,7 @@ import copy
 import cv2
 from matplotlib import pyplot as plt
 from open3d import *
-import time
+import time, datetime
 import os, sys
 PYTHON_FILE_PATH = os.path.join(os.path.dirname(__file__))+"/"
 
@@ -17,14 +17,16 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import String
 
 # my libriries
-sys.path.append(PYTHON_FILE_PATH + "../lib_python")
+sys.path.append(PYTHON_FILE_PATH + "../../lib_python")
 from lib_cloud import *
 from lib_ros_topic import ColorImageSubscriber, DepthImageSubscriber
 PYTHON_FILE_PATH = os.path.join(os.path.dirname(__file__))+"/"
 
+def get_time():
+    s=str(datetime.datetime.now())[5:].replace(' ','-').replace(":",'-').replace('.','-')[:-3]
+    return s # day, hour, seconds: 02-26-15-51-12-556
 
-def write_images_to_file(color, depth, index):
-    folder = PYTHON_FILE_PATH+'/../data/'
+def write_images_to_file(color, depth, folder, index):
     idx="{:05d}".format(cnt)
     f1=folder+"depth"+idx+".png"
     f2=folder+"image"+idx+".png"
@@ -38,6 +40,7 @@ if __name__ == '__main__':
 
     TOPIC_COLOR_IMAGE="/camera/color/image_raw"
     TOPIC_DEPTH_IMAGE="/camera/aligned_depth_to_color/image_raw"
+    DATA_FOLDER = PYTHON_FILE_PATH+'../../data/source/'
 
     sub_color = ColorImageSubscriber(TOPIC_COLOR_IMAGE)
     sub_depth = DepthImageSubscriber(TOPIC_DEPTH_IMAGE)
@@ -45,8 +48,8 @@ if __name__ == '__main__':
 
     print  node_name+": node starts!!!"
     print " === Press 's' to save image === "
-
-    cnt = 0
+    
+    flag_record = False
     while not rospy.is_shutdown():
         if(sub_color.isReceiveImage() and sub_depth.isReceiveImage):
             color, t1 = sub_color.get_image()
@@ -56,11 +59,28 @@ if __name__ == '__main__':
             depth_in_color = cv2.cvtColor((depth/10).astype(np.uint8),cv2.COLOR_GRAY2RGB)
             cv2.imshow("rgb + depth", np.hstack([color, depth_in_color]))
             q = cv2.waitKey(1)
+
+            if q==-1:
+                q = 0
             if chr(q)=='q':
                 break
-            elif chr(q)=='s':
+            elif chr(q)=='s': # Record
+                if flag_record == False:
+                    print("\n\n==========================")
+                    print("Start recording\n")
+                    flag_record = True
+                    folder = DATA_FOLDER + get_time() + "/"
+                    if not os.path.exists(folder):
+                        os.mkdir(folder)
+                    cnt = 0
+            elif chr(q)=='d':
+                flag_record = False
+                print("\n\n==========================")
+                print("Stop recording\n")
+
+            if flag_record==True:
                 cnt+=1
-                write_images_to_file(color, depth, cnt)
+                write_images_to_file(color, depth, folder, cnt)
 
         rospy.sleep(0.01)
 
