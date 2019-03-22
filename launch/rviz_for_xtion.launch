@@ -1,3 +1,0 @@
-<launch>
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find auto_collect)/config/rviz_for_xtion.rviz" />
-</launch>

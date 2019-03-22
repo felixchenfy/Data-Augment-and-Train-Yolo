@@ -1,19 +1,23 @@
 
-config/*.yaml
-config/*.rviz
-data/*
-data*/*
-.vscode/*
-build/*
-others/*
+# Data
+data 
+data_yolo
 
-test*
+# Results
+model
+results
+
+# Github repos
+darknet
+darknet_old
+darknet_VG
 keras-yolo3/*
-*.ipynb_checkpoints*
-tmp*
 
-*.avi
+# Other folders
+Trash
+.vscode
+
+
+# Temprary files
 *.pyc
-*.pcd
-*.png
-*.jpg
+
