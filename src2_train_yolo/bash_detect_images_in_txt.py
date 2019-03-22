@@ -1,12 +1,10 @@
 import os, sys
-import glob
-os.system
-import PIL
-import PIL.Image as Image
+import cv2
+import time
 CURR_PATH = os.path.dirname(os.path.abspath(__file__))+"/"
 
 # WARNING!!!! Please run this from the root folder: 
-# $ python src2_train_yolo/detect_images_in_txt.py
+# $ python src2_train_yolo/bash_detect_images_in_txt.py
 
 # Settings 
 base_command = './darknet/darknet detector test src2_train_yolo/my-train.data src2_train_yolo/yolov3-my-test.cfg model/v1-6000.weights -dont_show'
@@ -19,19 +17,19 @@ output_images_folder = CURR_PATH + "../results/" + object_name + "/"
 d = 0
 cnt_line = 0
 
-with open((input_txt_path ),'r') as fobj:
-    for line in fobj:
+with open((input_txt_path ),'r') as f:
+    for line in f:
         cnt_line += 1
 
         image = line.strip()
-        print(image)
+        print("Processing:", image)
 
-        commands = [base_command, image]
-        os.system(' '.join(commands))
+        os.system(base_command + ' ' + image)
 
-        predicted_image = Image.open( CURR_PATH + "../predictions.jpg")
+        img = cv2.imread(CURR_PATH + "../predictions.jpg")
+        cv2.imwrite(output_images_folder + "{:06d}.jpg".format(cnt_line), img)
 
-        output = output_images_folder + "{:06d}.jpg".format(cnt_line)
-        predicted_image.save(output)
-
-        print(output)
+        cv2.imshow("Detection result" , img)
+        q = cv2.waitKey(10)
+        if q!=-1 and q=='q': # Why can't it stop ?!
+            break
