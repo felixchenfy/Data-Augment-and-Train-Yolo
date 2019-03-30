@@ -45,10 +45,10 @@ Change name of the input arguments
 
 Test image
 $ python yolo_video.py
-$ /home/qiancheng/DISK/feiyu/auto_collect/data_yolo/example1.png
+$ /home/qiancheng/DISK/feiyu/TrainYolo/data_yolo/example1.png
 
 Test video
-$ python yolo_video.py --input /home/qiancheng/DISK/feiyu/auto_collect/data_yolo/video_bottle.avi --output res_video.avi
+$ python yolo_video.py --input /home/qiancheng/DISK/feiyu/TrainYolo/data_yolo/video_bottle.avi --output res_video.avi
 
 Test wabcam
 $ python yolo_video.py --input 0 --output ./
@@ -61,7 +61,7 @@ $ python convert.py -w ../src2_train_yolo/yolov3-my-train.cfg ../model/v1-6000.w
 
 Test image
 $ python yolo_video.py --model_path model_data/v1-6000.h5 --anchors_path model_data/yolo_anchors.txt --classes_path ../data_yolo/classes.txt --image
-$ /home/qiancheng/DISK/feiyu/auto_collect/data_yolo/example1.png
+$ /home/qiancheng/DISK/feiyu/TrainYolo/data_yolo/example1.png
 
 Test video
 $ python yolo_video.py --model_path model_data/v1-6000.h5 --anchors_path model_data/yolo_anchors.txt --classes_path ../data_yolo/classes.txt --input ../data_yolo/video_bottle.avi --output ../results/video_bottle_res.avi

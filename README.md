@@ -83,7 +83,7 @@ See [this page](https://pjreddie.com/darknet/yolo/). Its pretrained on Imagenet.
 > $ wget https://pjreddie.com/media/files/darknet53.conv.74
 
 Test if Darkent is installed correctly:  
-> $ cd darkent && ./darknet detector test ./cfg/coco.data ./cfg/yolov3.cfg ./yolov3.weights data/dog.jpg
+> $ cd darknet && ./darknet detector test ./cfg/coco.data ./cfg/yolov3.cfg ./yolov3.weights data/dog.jpg
 
 
 #### (2) Download my training result
@@ -215,6 +215,15 @@ src2_train_yolo
     Total Detection Time: 9.000000 Seconds
     ```
 
+* **Speed**
+  
+* Test single image:    
+image size: 416x416  
+time = 22.6 ms  
+  
+* Test a batch of images:  
+image size: 416x416  
+time = 9s/469 = 19.2 ms  
 
 
 ## 4.3 Test
@@ -244,8 +253,7 @@ src2_train_yolo
 
 # TODO
 
-1. More training data  
-2. In data augmentation: Add more small objects. Add motion blur.  
-3. Improve README
-4. Change source code to enable input of video or batch images.
-5. Integrate with my Winter Project.
+1. In data augmentation: Add more small objects. Add motion blur.  
+2. Improve README.
+3. Change source code to enable input of video or batch images.
+4. Integrate with my Winter Project to detect object 6D pose.
